@@ -12,7 +12,7 @@ The bot accumulated 1,000 followers in it's first week of existence!
 
 [Link to Bot](https://twitter.com/DASecurityTimes)
 
-Technologies:
+<h1> Built With </h1>
 
 * [BeautifulSoup](https://www.crummy.com/software/BeautifulSoup/bs4/doc/) - For data scraping from Dublin Airport website
 * [InfluxDB](https://docs.influxdata.com/influxdb/v1.8/) - OSS time-series database, for storing security times

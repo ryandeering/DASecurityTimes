@@ -71,4 +71,4 @@ if t1[0] or t2[0]:
     if plot_shown is None:
         api.update_status(tweet)
     else:
-        api.update_status(media_ids=[plotShown.media_id_string], status=tweet)
+        api.update_status(media_ids=[plot_shown.media_id_string], status=tweet)

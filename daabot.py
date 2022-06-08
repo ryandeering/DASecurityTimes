@@ -64,7 +64,8 @@ if strftime("%H:%M") == "12:00":
     tweet += "\n\n #DAA #DublinAirport"
 
 if strftime("%H:%M") == "00:00":
-    show_plot(datetime.today().strftime("%d/%m/%Y") + " Security Times")
+    date = datetime.today() - timedelta(days=1)
+    show_plot(date.strftime("%d/%m/%Y") + " Security Times")
     PLOT_SHOWN = uploadimage()
     tweet += "\n\n #DAA #DublinAirport"
 

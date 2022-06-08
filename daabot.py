@@ -1,5 +1,4 @@
 import calendar
-import datetime
 import re
 from datetime import date, datetime, timedelta
 from io import BytesIO
@@ -33,7 +32,7 @@ today = datetime.now()
 date_time = today.strftime("%d/%m/%Y %H:%M")
 
 influx_client = InfluxDBClient(host="localhost", port=8086)
-plot_shown = None
+PLOT_SHOWN = None
 
 URL = "https://www.dublinairport.com/flight-information/live-departures"
 html_doc = requests.get(URL).content
@@ -47,6 +46,11 @@ tweet = "Current times - " + calendar.day_name[today.weekday()] + ", " + date_ti
 
 if t1[0] == "60" or t2[0] == "60":
     tweet += "\n\n WARNING: Allow yourself extra time to get through security. A terminal is peaking. "
+    
+if t1[0] or t2[0]:
+    influx_client.write(
+        ["terminals T1=" + t1[0] + ",T2=" + t2[0]], {"db": "DAA"}, 204, "line"
+    )
 
 if strftime("%H:%M") == "12:00":
     date = datetime.today() - timedelta(days=1)
@@ -56,19 +60,15 @@ if strftime("%H:%M") == "12:00":
         + datetime.today().strftime("%d/%m/%Y")
         + " Security Times"
     )
-    plot_shown = uploadimage()
+    PLOT_SHOWN = uploadimage()
     tweet += "\n\n #DAA #DublinAirport"
 
 if strftime("%H:%M") == "00:00":
     show_plot(datetime.today().strftime("%d/%m/%Y") + " Security Times")
-    plot_shown = uploadimage()
+    PLOT_SHOWN = uploadimage()
     tweet += "\n\n #DAA #DublinAirport"
 
-if t1[0] or t2[0]:
-    influx_client.write(
-        ["terminals T1=" + t1[0] + ",T2=" + t2[0]], {"db": "DAA"}, 204, "line"
-    )
-    if plot_shown is None:
-        api.update_status(tweet)
-    else:
-        api.update_status(media_ids=[plot_shown.media_id_string], status=tweet)
+if PLOT_SHOWN is None:
+    api.update_status(tweet)
+else:
+    api.update_status(media_ids=[PLOT_SHOWN.media_id_string], status=tweet)

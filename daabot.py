@@ -45,7 +45,7 @@ tweet = "Current times - " + calendar.day_name[today.weekday()] + ", " + date_ti
     t1[0]) + " minutes" + "\nTerminal 2: " + str(t2[0]) + " minutes"
 
 if t1[0] == "60" or t2[0] == "60":
-    tweet += "\n\n WARNING: Allow yourself extra time to get through security. A terminal is peaking. "
+    tweet += "\n\nWARNING: Allow yourself extra time to get through security. A terminal is peaking. "
 
 if t1[0] or t2[0]:
     influx_client.write(

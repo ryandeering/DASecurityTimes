@@ -20,5 +20,4 @@ The bot accumulated 1,000 followers in it's first week of existence!
 * [Tweepy](https://www.tweepy.org/) - Python library to call Twitter API
 * [Pillow](https://pillow.readthedocs.io/en/stable/) - Python image library
 
-
-![chart2](https://user-images.githubusercontent.com/37181720/172485492-19788834-6de4-4d83-8e81-cb356da64365.png)
+![image](https://user-images.githubusercontent.com/37181720/174308996-703472b3-58af-4412-9573-d0c0225dc62e.png)

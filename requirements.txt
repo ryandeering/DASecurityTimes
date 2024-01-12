@@ -1,30 +1,9 @@
-# daabot.py: 12
-Pillow == 6.2.0
-
-# daabot.py: 10
-beautifulsoup4 == 4.7.1
-
-# daabot.py: 11
-# daaplot.py: 8
-influxdb == 5.3.1
-
-# daaplot.py: 1,2,3
-matplotlib == 3.5.2
-
-# daaplot.py: 4
-numpy == 1.21.0
-
-# daaplot.py: 5
-pandas == 1.3.5
-
-# daaplot.py: 7
-python_dateutil == 2.8.2
-
-# daabot.py: 8
-requests == 2.27.0
-
-# daaplot.py: 6
-seaborn == 0.11.2
-
-# daabot.py: 9
-tweepy == 4.10.0
+beautifulsoup4==4.12.2
+influxdb_client==1.39.0
+matplotlib==3.8.2
+numpy==1.26.3
+pandas==2.1.4
+Pillow==10.2.0
+Requests==2.31.0
+seaborn==0.13.1
+tweepy==4.14.0

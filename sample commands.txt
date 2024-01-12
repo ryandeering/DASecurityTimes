@@ -1,0 +1,1 @@
+from(bucket: "daa") |> range(start: -1y) |> filter(fn: (r) => r._measurement == "terminals")

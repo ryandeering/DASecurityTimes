@@ -1,3 +1,12 @@
+"""
+This script automates the process of tweeting Dublin Airport security times 
+and logs them in an InfluxDB database.
+
+Written and maintained by Ryan Deering (@ryandeering)
+"""
+
+from io import BytesIO
+
 import matplotlib
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
@@ -5,18 +14,31 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from influxdb_client import InfluxDBClient
-from io import BytesIO
+
 from credentials import INFLUXDB_URL, INFLUXDB_BUCKET, INFLUXDB_ORG, INFLUXDB_TOKEN
 
 def init_influxdb_client():
+    """
+    Initialize and return an InfluxDB client with the provided credentials.
+    """
     return InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
 
 def fetch_data(client):
+    """
+    Fetch data from InfluxDB.
+    """
     query_api = client.query_api()
-    query = f'from(bucket: "{INFLUXDB_BUCKET}") |> range(start: -24h) |> filter(fn: (r) => r._measurement == "terminals")'
+    query = (
+        f'from(bucket: "{INFLUXDB_BUCKET}")'
+        f' |> range(start: -24h)'
+        f' |> filter(fn: (r) => r._measurement == "terminals")'
+    )
     return query_api.query(org=INFLUXDB_ORG, query=query)
 
 def prepare_dataframe(result):
+    """
+    Prepare data as a DataFrame.
+    """
     records = []
 
     for table in result:
@@ -39,6 +61,9 @@ def prepare_dataframe(result):
     return df
 
 def plot_data(df, titlename):
+    """
+    Plot the data.
+    """
     matplotlib.rcParams["timezone"] = "Europe/Dublin"
     sns.set(style="darkgrid", context="talk")
     plt.style.use("dark_background")
@@ -69,6 +94,9 @@ def plot_data(df, titlename):
     return fig
 
 def save_plot_to_buffer(fig):
+    """
+    Save the plot to a buffer.
+    """
     buf = BytesIO()
     fig.savefig(buf, format="png")
     buf.seek(0)
@@ -76,6 +104,9 @@ def save_plot_to_buffer(fig):
     return buf
 
 def show_plot(titlename):
+    """
+    Show the plot.
+    """
     client = init_influxdb_client()
     try:
         result = fetch_data(client)

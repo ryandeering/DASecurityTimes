@@ -5,6 +5,8 @@ Configuration variables for Dublin Airport Security Times Twitter Bot and Influx
 - CONSUMER_SECRET: Twitter API consumer secret for authentication.
 - ACCESS_TOKEN: Twitter API access token for authentication.
 - ACCESS_TOKEN_SECRET: Twitter API access token secret for authentication.
+- BLUESKY_USERNAME: BlueSky username for authentication.
+- BLUESKY_PASSWORD: BlueSKy password for authentication.
 - INFLUXDB_URL: URL of the InfluxDB instance.
 - INFLUXDB_TOKEN: Authentication token for InfluxDB.
 - INFLUXDB_ORG: InfluxDB organization name.
@@ -14,6 +16,8 @@ CONSUMER_KEY = ""
 CONSUMER_SECRET = ""
 ACCESS_TOKEN = ""
 ACCESS_TOKEN_SECRET = ""
+BLUESKY_USERNAME=""
+BLUESKY_PASSWORD=""
 INFLUXDB_URL = ""
 INFLUXDB_TOKEN = ""
 INFLUXDB_ORG = ""

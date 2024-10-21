@@ -1,8 +1,9 @@
 """
-This script automates the process of tweeting Dublin Airport security times 
-and logs them in an InfluxDB database.
+This script automates the process of posting Dublin Airport security times 
+to Twitter and Bluesky + logs them in an InfluxDB database.
 
 Written and maintained by Ryan Deering (@ryandeering)
+2022-2024
 """
 
 import calendar
@@ -14,12 +15,15 @@ import tweepy
 from bs4 import BeautifulSoup
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
+from atproto import Client as BlueskyClient, exceptions as atproto_exceptions
 
 from credentials import (
     CONSUMER_KEY,
     CONSUMER_SECRET,
     ACCESS_TOKEN,
     ACCESS_TOKEN_SECRET,
+    BLUESKY_USERNAME,
+    BLUESKY_PASSWORD,
     INFLUXDB_URL,
     INFLUXDB_BUCKET,
     INFLUXDB_ORG,
@@ -30,16 +34,25 @@ from daaplot import show_plot
 
 def init_twitter_api():
     """
-    Initialize and return a Tweepy API client using the provided credentials.
+    Initialise and return a Tweepy API client using the provided credentials.
     """
     auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
     return tweepy.API(auth)
 
 
-def init_influxdb_client():
+def init_bluesky_api():
     """
-    Initialize and return an InfluxDB client with the provided credentials.
+    Initialise and return a Bluesky API client using the provided credentials.
+    """
+    client = BlueskyClient()
+    client.login(BLUESKY_USERNAME, BLUESKY_PASSWORD)
+    return client
+
+
+def init_influxdb_api():
+    """
+    Initialise and return an InfluxDB client with the provided credentials.
     """
     return InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
 
@@ -68,23 +81,23 @@ def write_to_influxdb(influx_client, t1_minutes, t2_minutes):
     write_api.write(bucket=INFLUXDB_BUCKET, record=point)
 
 
-def generate_tweet(today, t1_minutes, t2_minutes):
+def generate_post(today, t1_minutes, t2_minutes):
     """
-    Generate a tweet with security times information.
+    Generate a post with security times information.
     """
     date_time = today.strftime("%d/%m/%Y %H:%M")
-    tweet = (
+    post = (
         f"Current times - {calendar.day_name[today.weekday()]}, {date_time} \n"
         f"Terminal 1: {t1_minutes} minutes\nTerminal 2: {t2_minutes} minutes"
     )
 
     if t1_minutes == "60" or t2_minutes == "60":
-        tweet += (
+        post += (
             "\n\nWARNING: Allow yourself extra time to get through security. "
             "A terminal is peaking."
         )
 
-    return tweet
+    return post
 
 
 def plot_and_upload():
@@ -126,23 +139,42 @@ def upload_tweet(api, text, image_buffer=None):
         print("An error occurred while posting the tweet:", tweep_error)
 
 
+def upload_bluesky_post(client, text, image_buffer=None):
+    """
+    Upload a post to Bluesky
+    """
+    try:
+        if image_buffer:
+            image_buffer.seek(0)
+            client.send_image(
+                text=text, image=image_buffer, image_alt="Dublin Airport security times"
+            )
+        else:
+            client.send_post(text=text)
+    except atproto_exceptions.AtProtocolError as error:
+        print(f"An error occurred while posting to Bluesky: {error}")
+
+
 def main():
     """
-    Main function to fetch security times, generate a tweet, and upload it.
+    Main function to fetch security times, generate a post, and upload it.
     """
-    api = init_twitter_api()
-    influx_client = init_influxdb_client()
+    twitter_api = init_twitter_api()
+    bluesky_api = init_bluesky_api()
+    influx_api = init_influxdb_api()
     t1_minutes, t2_minutes = get_airport_times()
 
     today = datetime.now()
-    tweet_text = generate_tweet(today, t1_minutes, t2_minutes)
+    post_text = generate_post(today, t1_minutes, t2_minutes)
 
     if t1_minutes is not None and t2_minutes is not None:
-        write_to_influxdb(influx_client, t1_minutes, t2_minutes)
+        write_to_influxdb(influx_api, t1_minutes, t2_minutes)
 
     plot_media = plot_and_upload()
 
-    upload_tweet(api, tweet_text, plot_media)
+    upload_tweet(twitter_api, post_text, plot_media)
+
+    upload_bluesky_post(bluesky_api, post_text, plot_media)
 
 
 if __name__ == "__main__":

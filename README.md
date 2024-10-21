@@ -10,8 +10,8 @@ The project is set up to post on Twitter every 30 minutes, inserting into an Inf
 
 The bot accumulated 1,000 followers in it's first week of existence!
 
-[Link to Twitter Bot](https://twitter.com/DASecurityTimes)
-[Link to BlueSky Bot](https://bsky.app/profile/dasecuritytimes.bsky.social)
+- [Twitter](https://twitter.com/DASecurityTimes)
+- [BlueSky](https://bsky.app/profile/dasecuritytimes.bsky.social)
 
 <h1> Built With </h1>
 

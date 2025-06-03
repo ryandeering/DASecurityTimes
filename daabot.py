@@ -3,7 +3,7 @@ This script automates the process of posting Dublin Airport security times
 to Twitter and Bluesky + logs them in an InfluxDB database.
 
 Written and maintained by Ryan Deering (@ryandeering)
-2022-2024
+2022-2025
 """
 
 import calendar
@@ -12,7 +12,6 @@ from datetime import datetime, timedelta
 
 import requests
 import tweepy
-from bs4 import BeautifulSoup
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
 from atproto import Client as BlueskyClient, exceptions as atproto_exceptions
@@ -59,16 +58,40 @@ def init_influxdb_api():
 
 def get_airport_times():
     """
-    Fetch Dublin Airport security times from the website using BeautifulSoup4 and return them.
+    Fetch Dublin Airport security times from the API endpoint.
+
+    Uses the JSON response from:
+        https://www.dublinairport.com/upi/SecurityTimes/GetTimes
+
+    Expected JSON format:
+        {"T1":"= 4","T2":"= 3"}       
     """
-    url = "https://www.dublinairport.com/flight-information/live-departures"
-    html_doc = requests.get(url, timeout=10).content
-    soup = BeautifulSoup(html_doc, "html.parser")
-    times = soup.find("div", class_="sec-times").findAll("strong")
-    t1_minutes, t2_minutes = (
-        re.findall(r"\d+", times[0].getText())[0],
-        re.findall(r"\d+", times[1].getText())[0],
-    )
+    url = "https://www.dublinairport.com/upi/SecurityTimes/GetTimes"
+    try:
+        resp = requests.get(url, timeout=10)
+    except requests.RequestException as e:
+        raise ValueError(f"Error fetching security times API: {e}") from e
+
+    try:
+        data = resp.json()
+    except requests.exceptions.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON from security times API: {e}") from e
+
+    # Expecting keys "T1" and "T2" with values like "= 4"
+    if "T1" not in data or "T2" not in data:
+        raise ValueError(f"Unexpected JSON structure: {data}")
+
+    # Extract digits from the strings (e.g., "= 4" → "4")
+    t1_raw = data["T1"]
+    t2_raw = data["T2"]
+    t1_match = re.search(r"\d+", t1_raw)
+    t2_match = re.search(r"\d+", t2_raw)
+
+    if not t1_match or not t2_match:
+        raise ValueError(f"Could not parse minutes from API response: {data}")
+
+    t1_minutes = t1_match.group(0)
+    t2_minutes = t2_match.group(0)
     return t1_minutes, t2_minutes
 
 

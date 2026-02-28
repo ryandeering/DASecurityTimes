@@ -67,8 +67,9 @@ def get_airport_times():
         {"T1":"= 4","T2":"= 3"}       
     """
     url = "https://www.dublinairport.com/upi/SecurityTimes/GetTimes"
+    headers = {"User-Agent": "Mozilla/5.0 (X11; Linux aarch64) DASecurityTimes/1.0"}
     try:
-        resp = requests.get(url, timeout=10)
+        resp = requests.get(url, timeout=10, headers=headers)
     except requests.RequestException as e:
         raise ValueError(f"Error fetching security times API: {e}") from e
 
@@ -127,12 +128,12 @@ def plot_and_upload():
     """
     Generate and upload a plot with optional image to be used in the tweet -- uses daaplot.py
     """
-    current_time = datetime.now().strftime("%H:%M")
+    current_hour = datetime.now().hour
     date = datetime.today() - timedelta(days=1)
     plot_title = None
     plot_media = None
 
-    if current_time == "12:00":
+    if current_hour == 12:
         plot_title = (
             date.strftime("%d/%m/%Y")
             + " - "
@@ -140,7 +141,7 @@ def plot_and_upload():
             + " Security Times"
         )
         plot_media = show_plot(plot_title)
-    elif current_time == "00:00":
+    elif current_hour == 0:
         plot_title = date.strftime("%d/%m/%Y") + " Security Times"
         plot_media = show_plot(plot_title)
 
@@ -178,26 +179,40 @@ def upload_bluesky_post(client, text, image_buffer=None):
         print(f"An error occurred while posting to Bluesky: {error}")
 
 
+def init_api(name, init_fn):
+    """
+    Safely initialise an API client, returning None on failure.
+    """
+    try:
+        return init_fn()
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        print(f"Warning: Failed to initialise {name} API: {e}")
+        return None
+
+
 def main():
     """
     Main function to fetch security times, generate a post, and upload it.
     """
-    twitter_api = init_twitter_api()
-    bluesky_api = init_bluesky_api()
-    influx_api = init_influxdb_api()
+    twitter_api = init_api("Twitter", init_twitter_api)
+    bluesky_api = init_api("Bluesky", init_bluesky_api)
+    influx_api = init_api("InfluxDB", init_influxdb_api)
+
     t1_minutes, t2_minutes = get_airport_times()
 
     today = datetime.now()
     post_text = generate_post(today, t1_minutes, t2_minutes)
 
-    if t1_minutes is not None and t2_minutes is not None:
+    if influx_api and t1_minutes is not None and t2_minutes is not None:
         write_to_influxdb(influx_api, t1_minutes, t2_minutes)
 
     plot_media = plot_and_upload()
 
-    upload_tweet(twitter_api, post_text, plot_media)
+    if twitter_api:
+        upload_tweet(twitter_api, post_text, plot_media)
 
-    upload_bluesky_post(bluesky_api, post_text, plot_media)
+    if bluesky_api:
+        upload_bluesky_post(bluesky_api, post_text, plot_media)
 
 
 if __name__ == "__main__":
